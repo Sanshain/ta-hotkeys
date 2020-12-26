@@ -36,7 +36,22 @@ sf
 		const editor = document.getElementById('editor');
 
 		let actions = {
-			begin: () => '',
+			begin: (line, value) => {
+				// let value = '# '
+				// const undoFlag = new RegExp('^' + value + '[\\s\\S]+?$').exec(line);
+				// const undoFlag= line.match(/^# [\S\s]+?$/);	// regex.exec(line);
+				// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
+
+				const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
+				let undoFlag = regex.exec(line);				
+				return {
+					// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
+					line: undoFlag ? line.replace(regex, '$1') : value + line,
+					offset: value.length,
+					undo: undoFlag,
+					eventAbort: true
+				}
+			},
 
 			'/': (line) => {
 				const undoFlag = line.match(/<center>[\s\S]*?<\/center>/);
@@ -48,9 +63,15 @@ sf
 			},
 			'-': (line) => {
 				let value = '# '
-				const undoFlag = line.match(/^# [\S\s]+?$/);
+				// const undoFlag = new RegExp('^' + value + '[\\s\\S]+?$').exec(line);
+				// const undoFlag= line.match(/^# [\S\s]+?$/);	// regex.exec(line);
+				// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
+
+				const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
+				let undoFlag = regex.exec(line);				
 				return {
-					line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
+					// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
+					line: undoFlag ? line.replace(regex, '$1') : value + line,
 					offset: value.length,
 					undo: undoFlag,
 					eventAbort: true
@@ -87,7 +108,7 @@ sf
 
 			// получаем текст:
 			let preLine = editor.value.substr(0, startLine ? startLine + 1 : startLine);
-			let line = editor.value.substring(startLine + 1, endLine);
+			let line = editor.value.substring(startLine ? startLine + 1 : startLine, endLine);
 			let postLine = editor.value.substr(endLine);
 
 
