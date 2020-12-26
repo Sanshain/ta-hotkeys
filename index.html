@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<style>
+		#editor,
+		button,
+		div {
+			margin: 2em auto;
+			display: block;
+			width: 50%;
+
+			-moz-tab-size: 4;
+			-o-tab-size: 4;
+			tab-size: 4;
+		}
+	</style>
+</head>
+
+<body>
+
+	<textarea name="" id="editor" rows="10" onkeydown='preformat(event)'>
+sdfsfsf
+sdfsfs
+sdf sdf
+sf		sdf sdf
+sf 		
+	</textarea>
+	<button onclick="format_text(event)">click for centered</button>
+	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
+
+	<script>
+		const editor = document.getElementById('editor');
+
+		let actions = {
+			begin: () => '',
+
+			'/': (line) => {
+				const undoFlag = line.match(/<center>[\s\S]*?<\/center>/);
+				return {
+					line: undoFlag ? line.replace(/<center>([\s\S]*?)<\/center>/, '$1') : '<center>' + line + '</center>',
+					offset: '<center>'.length,
+					undo: undoFlag
+				}
+			},
+			'-': (line) => {
+				let value = '# '
+				const undoFlag = line.match(/^# [\S\s]+?$/);
+				return {
+					line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
+					offset: value.length,
+					undo: undoFlag,
+					eventAbort: true
+				}
+			}			
+		}
+
+		function preformat(e) {
+
+			console.log(e);
+			if (event.ctrlKey) format_text(e);
+		}
+
+		function format_text(event) {
+
+			let caret = null || 0;
+
+
+
+			// получаем позицию курсора
+			if (editor.selectionStart !== undefined) caret = editor.selectionStart;
+			else alert('polyfill required');
+
+
+			// получаем позицию начала строки
+			let startLine = (editor.value.lastIndexOf('\n', caret - 1));
+			if (startLine < 0) startLine = 0;
+
+
+			// получаем позицию конца строки
+			let endLine = (editor.value.indexOf('\n', caret));
+			if (endLine < 0) endLine = editor.value.length;
+
+
+			// получаем текст:
+			let preLine = editor.value.substr(0, startLine ? startLine + 1 : startLine);
+			let line = editor.value.substring(startLine + 1, endLine);
+			let postLine = editor.value.substr(endLine);
+
+
+			var formatAction = actions[event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined))];
+			if (formatAction) var preformat = formatAction(line);
+			else {
+				return;
+			}
+
+			// заменяем текст
+			editor.value = preLine + preformat.line + postLine;
+
+			// возвращаем выделение
+			editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);
+			editor.focus();
+
+			if (preformat.eventAbort) event.preventDefault();
+
+		}
+
+		window.onload = () => editor.focus();
+	</script>
+</body>
+
+</html>
