@@ -32,27 +32,12 @@ sf
 	<button onclick="format_text(event)">click for centered</button>
 	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
 
-	<script>
-		const editor = document.getElementById('editor');
+	<script src="macro__actions.js"></script>
+	<script src="editor__tools.js"></script>
+	<script>		
 
-		let actions = {
-			begin: (line, value) => {
-				// let value = '# '
-				// const undoFlag = new RegExp('^' + value + '[\\s\\S]+?$').exec(line);
-				// const undoFlag= line.match(/^# [\S\s]+?$/);	// regex.exec(line);
-				// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
-
-				const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
-				let undoFlag = regex.exec(line);				
-				return {
-					// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
-					line: undoFlag ? line.replace(regex, '$1') : value + line,
-					offset: value.length,
-					undo: undoFlag,
-					eventAbort: true
-				}
-			},
-
+		var actions = {
+			__proto__: actionsMacro,
 			'/': (line) => {
 				const undoFlag = line.match(/<center>[\s\S]*?<\/center>/);
 				return {
@@ -61,75 +46,11 @@ sf
 					undo: undoFlag
 				}
 			},
-			'-': (line) => {
-				let value = '# '
-				// const undoFlag = new RegExp('^' + value + '[\\s\\S]+?$').exec(line);
-				// const undoFlag= line.match(/^# [\S\s]+?$/);	// regex.exec(line);
-				// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
-
-				const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
-				let undoFlag = regex.exec(line);				
-				return {
-					// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
-					line: undoFlag ? line.replace(regex, '$1') : value + line,
-					offset: value.length,
-					undo: undoFlag,
-					eventAbort: true
-				}
-			}			
+			'-': (line) => actions.begin('# ', line),
+			'Tab': (line, event) => actions.begin('	', line, event)
 		}
 
-		function preformat(e) {
-
-			console.log(e);
-			if (event.ctrlKey) format_text(e);
-		}
-
-		function format_text(event) {
-
-			let caret = null || 0;
-
-
-
-			// получаем позицию курсора
-			if (editor.selectionStart !== undefined) caret = editor.selectionStart;
-			else alert('polyfill required');
-
-
-			// получаем позицию начала строки
-			let startLine = (editor.value.lastIndexOf('\n', caret - 1));
-			if (startLine < 0) startLine = 0;
-
-
-			// получаем позицию конца строки
-			let endLine = (editor.value.indexOf('\n', caret));
-			if (endLine < 0) endLine = editor.value.length;
-
-
-			// получаем текст:
-			let preLine = editor.value.substr(0, startLine ? startLine + 1 : startLine);
-			let line = editor.value.substring(startLine ? startLine + 1 : startLine, endLine);
-			let postLine = editor.value.substr(endLine);
-
-
-			var formatAction = actions[event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined))];
-			if (formatAction) var preformat = formatAction(line);
-			else {
-				return;
-			}
-
-			// заменяем текст
-			editor.value = preLine + preformat.line + postLine;
-
-			// возвращаем выделение
-			editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);
-			editor.focus();
-
-			if (preformat.eventAbort) event.preventDefault();
-
-		}
-
-		window.onload = () => editor.focus();
+		window.addEventListener('load', () => editor.focus());
 	</script>
 </body>
 
