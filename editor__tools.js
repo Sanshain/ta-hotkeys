@@ -65,9 +65,7 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 	}
 
 	// action apply
-	// InputTypeAction[event.inputType](event);
-	undoStorage.push(Object.assign({}, input)); //  undoStorage.push(JSON.parse(JSON.stringify(input)))
-
+	InputTypeAction[event.inputType](event);
 	// clear redo action storage
 	if (event.inputType != 'historyUndo') {
 
@@ -83,21 +81,90 @@ const redoStorage = [];
 const redo = (e) => {
 	let redoState = redoStorage.pop();
 	if (redoState) {
-		undoStorage.push(redoState), redoLog();
-		
-		actionApply(redoState, 'redo');
-		e.preventDefault();
+		undoStorage.push(redoState);
+		switch (redoState.type) {
+			case 'insertText':
+				editor.value = (
+					editor.value.slice(0, redoState.selection.start) + redoState.data +
+					editor.value.slice(redoState.selection.end + redoState.lostData.length)
+				)
+				editor.selectionStart = editor.selectionEnd = redoState.selection.end + 1;
+				break;
+			case 'deleteByCut':							// either cut approach
+			case 'deleteContentForward':				// del on sel.len == 0
+			case 'deleteContentBackward':				// all other approaches to del
+
+				editor.value = (
+					editor.value.substring(0, redoState.selection.start) + (redoState.data || '') +
+					editor.value.substring(redoState.selection.end + redoState.lostData.length)
+				);
+
+				editor.selectionStart = editor.selectionEnd = redoState.selection.start;
+				
+				break;
+
+			case 'insertFromPaste':
+
+				editor.value = (
+					editor.value.substring(0, redoState.selection.start) + redoState.data +
+					editor.value.substring(redoState.selection.start + redoState.lostData.length)
+				);
+
+				editor.selectionStart = editor.selectionEnd = redoState.selection.start + redoState.data.length;
+				break;
+		}
 	}
-	
+	redoLog();
 }
 const undo = (e) => {
 	if (e.shiftKey) return redo(e);
 
 	let undoState = undoStorage.pop();
 	if (undoState) {
-		redoStorage.push(undoState), redoLog();
+		redoStorage.push(undoState);
+		redoLog();
 
-		actionApply(undoState, '');
+		switch (undoState.type) {
+			case 'insertFromPaste':
+
+				editor.value = (
+					editor.value.substring(0, undoState.selection.start) + undoState.lostData +
+					editor.value.substring(undoState.selection.start + undoState.data.length)
+				);
+				editor.setSelectionRange(undoState.selection.start, undoState.selection.end + undoState.lostData.length)
+
+				break;
+			case 'insertText':
+
+				if (!undoState.selection_length) editor.value = (
+					editor.value.substring(0, undoState.selection.start) + (undoState.lostData || '') +
+					editor.value.substring(undoState.selection.start + 1)
+				);
+
+				editor.setSelectionRange(
+					undoState.selection.start, undoState.selection.end + undoState.lostData.length
+				);
+				break;
+			case 'deleteByCut':							// either cut approach
+			case 'deleteContentForward':				// del on sel.len == 0
+			case 'deleteContentBackward':				// all other approaches to del
+				editor.value = (
+					editor.value.substring(0, undoState.selection.start) + undoState.lostData +
+					editor.value.substring(undoState.selection.end)
+				);
+
+				editor.selectionStart = editor.selectionEnd = (
+					undoState.selection.start +
+					(
+						undoState.type == InputActionType.deleteContentBackward && undoState.lostData.length <= 1
+					)
+				);
+
+				if (undoState.lostData.length > 1) {
+					editor.selectionEnd = undoState.selection.start + undoState.lostData.length;
+				}
+				break;
+		}
 		e.preventDefault();
 	}
 }
@@ -114,17 +181,17 @@ const input = {
 	},
 }
 
-// const InputTypeAction =
-// {
-// 	insertFromPaste: e => {
-// 		undoStorage.push(Object.assign({}, input))
-// 		// undoStorage.push(JSON.parse(JSON.stringify(input)))
-// 	},
-// 	deleteByCut: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
-// 	insertText: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
-// 	deleteContentBackward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
-// 	deleteContentForward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
-// }
+const InputTypeAction =
+{
+	insertFromPaste: e => {
+		undoStorage.push(Object.assign({}, input))
+		// undoStorage.push(JSON.parse(JSON.stringify(input)))
+	},
+	deleteByCut: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+	insertText: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+	deleteContentBackward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+	deleteContentForward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+}
 
 
 const InputActionType =
@@ -160,58 +227,6 @@ const state = {
 
 
 
-
-function actionApply(doingState, doingType) {
-
-	if (Boolean(doingType) !== Boolean('redo')) var lostData = doingState.lostData, data = doingState.data;
-	else { 
-		var data = doingState.lostData, 
-			lostData = doingState.data; 
-	}
-
-	switch (doingState.type) {
-		case 'insertFromPaste':
-
-			editor.value = (
-				editor.value.substring(0, doingState.selection.start) + lostData +
-				editor.value.substring(doingState.selection.start + data.length)
-			);
-			editor.setSelectionRange(doingState.selection.start, doingState.selection.end + lostData.length);
-
-			break;
-		case 'insertText':
-
-			if (!doingState.selection_length)
-				editor.value = (
-					editor.value.substring(0, doingState.selection.start) + (lostData || '') +
-					editor.value.substring(doingState.selection.start + 1)
-				);
-
-			editor.setSelectionRange(
-				doingState.selection.start, doingState.selection.end + lostData.length
-			);
-			break;
-		case 'deleteByCut': // either cut approach
-		case 'deleteContentForward': // del on sel.len == 0
-		case 'deleteContentBackward': // all other approaches to del
-			editor.value = (
-				editor.value.substring(0, doingState.selection.start) + lostData +
-				editor.value.substring(doingState.selection.end)
-			);
-
-			editor.selectionStart = editor.selectionEnd = (
-				doingState.selection.start +
-				(
-					doingState.type == InputActionType.deleteContentBackward && lostData.length <= 1
-				)
-			);
-
-			if (lostData.length > 1) {
-				editor.selectionEnd = selection.start + lostData.length;
-			}
-			break;
-	}	
-}
 
 /**
  * в отличие от format_text(e) 
