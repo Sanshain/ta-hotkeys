@@ -17,6 +17,14 @@
 			-o-tab-size: 4;
 			tab-size: 4;
 		}
+		.log__redo{
+			background-color: lightgray;
+			margin: 1em;
+			width: 90%;			
+			padding: 5px;
+    		font-family: monospace;		
+			overflow-wrap: break-word;	
+		}
 	</style>
 </head>
 
@@ -29,25 +37,26 @@ sdf sdf
 sf		sdf sdf
 sf 		
 	</textarea>
-	<button onclick="format_text(event)">click for centered</button>
+	<button onclick="format_text(event, '/')">click for centered</button>
 	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
+	<div class="log__undo"></div>
+	<div class="log__redo"></div>
 
+	<script src="undoManager/Log.js"></script>
 	<script src="macro__actions.js"></script>
 	<script src="editor__tools.js"></script>
-	<script>		
+	<script>
 
-		var actions = {
-			__proto__: actionsMacro,
-			'/': (line) => {
-				const undoFlag = line.match(/<center>[\s\S]*?<\/center>/);
-				return {
-					line: undoFlag ? line.replace(/<center>([\s\S]*?)<\/center>/, '$1') : '<center>' + line + '</center>',
-					offset: '<center>'.length,
-					undo: undoFlag
-				}
-			},
+		var actions = {__proto__: actionsMacro,
+
 			'-': (line) => actions.begin('# ', line),
-			'Tab': (line, event) => actions.begin('	', line, event)
+			'Tab': (line, event) => actions.begin('	', line, event),
+			'/': (line) => actions.tag_in('center', line),
+		}
+
+		let multiActions = { __proto__: multiMacro,
+
+			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target)
 		}
 
 		window.addEventListener('load', () => editor.focus());

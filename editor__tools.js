@@ -1,33 +1,147 @@
+// @ts-nocheck
+
+// redoLog = (() => { });
+redoLog = redoLog || (() => { });
 
 const editor = document.getElementById('editor');
+editor.addEventListener('keydown', function (event) {
 
-editor.addEventListener('input', event => {
-	console.log(event);		
-	// || (insertFromPaste | deleteByCut) || insertText || (deleteContentBackward | deleteContentForward)
+	input.selection = {
+		start: event.target.selectionStart,
+		end: event.target.selectionEnd,
+	};
 
-	console.log({
-		inputType: event.inputType,
-		data: event.data,
-		start: event.target.selectionStart,			// ловить на paste/cut либо на keydown 
-		end: event.target.selectionEnd,				// ловить 
-	})
-	// event.inputType
-	// event.data	
+	if (input.selection.length) input.lostData = editor.value.slice(
+		input.selection.start,
+		input.selection.end
+	)
+	else input.lostData = editor.value.slice(
+		input.selection.start - 1,
+		input.selection.end + 1
+	)
+
 });
 editor.addEventListener('paste', e => {
-	
-	console.log(e.target.selectionStart)
-	console.log(e.target.selectionEnd)
-	// console.log(window.clipboardData || e.clipboardData);
-	// console.log(e.clipboardData.getData('text/plain'))
-	// e.preventDefault();
+
+	input.data = (window.clipboardData || e.clipboardData).getData('text/plain');
+	// если вызвано из контекстного меню, то выделение надо ловить в контекстном меню
+
 });
-editor.addEventListener('cut', e => {});
+editor.addEventListener('input', event => {			// event.inputType && event.data	
+
+	if (event.inputType == 'historyUndo') {
+		console.log(event.inputType);
+		event.preventDefault();						// prevent need on keypress		
+		return false;
+	}
+
+
+	input.type = event.inputType;
+	if (input.type !== InputActionType.insertFromPaste) input.data = event.data;
+
+	if (!input.selection_length) {
+		if (input.type == InputActionType.deleteContentBackward) {
+			input.selection.start--;
+			input.selection.end--;
+			input.lostData = input.lostData[0];
+		}
+		else if (input.type == InputActionType.deleteContentForward) input.lostData = input.lostData[1];
+		else if (input.type == InputActionType.insertText || input.type == InputActionType.insertFromPaste) {
+
+			input.lostData = input.lostData.slice(1, -1);
+		}
+	}
+	else {
+
+		input.lostData = input.lostData.slice(1, -1);
+		input.selection.end = input.selection.start + ((input.selection.data || {}).length || 0);
+
+
+		// 	// input.selection.end = input.selection.end - input.lostData.length; // ?
+		// }
+		// else{ // deleteContentBackward | deleteContentForward // !
+
+		// }
+	}
+
+	// action apply
+	// InputTypeAction[event.inputType](event);
+	undoStorage.push(Object.assign({}, input)); //  undoStorage.push(JSON.parse(JSON.stringify(input)))
+
+	// clear redo action storage
+	if (event.inputType != 'historyUndo') {
+
+		redoStorage.splice(0, redoStorage.length);
+		redoLog();
+	}
+	else redoLog(undoStorage);
+});
+
+const undoStorage = [];
+const redoStorage = [];
+
+const redo = (e) => {
+	let redoState = redoStorage.pop();
+	if (redoState) {
+		undoStorage.push(redoState), redoLog();
+		
+		actionApply(redoState, 'redo');
+		e.preventDefault();
+	}
+	
+}
+const undo = (e) => {
+	if (e.shiftKey) return redo(e);
+
+	let undoState = undoStorage.pop();
+	if (undoState) {
+		redoStorage.push(undoState), redoLog();
+
+		actionApply(undoState, '');
+		e.preventDefault();
+	}
+}
+const input = {
+
+	type: null,		// 'insertFromPaste' | 'deleteByCut' | 'insertText' | 'deleteContentBackward' | ...
+	data: null,		//  inserted char by 'insertText' type
+	lostData: null, //  data been selected on insert
+
+	get selection_length() { return this.selection.end - this.selection.start },
+	selection: {
+		start: null,
+		end: null
+	},
+}
+
+// const InputTypeAction =
+// {
+// 	insertFromPaste: e => {
+// 		undoStorage.push(Object.assign({}, input))
+// 		// undoStorage.push(JSON.parse(JSON.stringify(input)))
+// 	},
+// 	deleteByCut: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+// 	insertText: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+// 	deleteContentBackward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+// 	deleteContentForward: e => undoStorage.push(JSON.parse(JSON.stringify(input))),
+// }
+
+
+const InputActionType =
+{
+	insertFromPaste: 'insertFromPaste',					// get selection (keydown) and clipboardData (paste)
+	deleteByCut: 'deleteByCut',							// get selection (keydown) 
+	insertText: 'insertText',							// get data (input) and selection (keydown)
+	deleteContentBackward: 'deleteContentBackward',		// get selection (keydown)
+	deleteContentForward: 'deleteContentForward'		// get selection (keydown)
+}
+
 
 const state = {
 	storageLimit: 20,							// count elements
 	smartStorageLimit: 500,					// kb size
 	storageSaveOn: '',							// on 'timeDebounce|enterKey'
+
 	undoStorage: [{
 		value: editor.value,
 		state: {
@@ -36,65 +150,95 @@ const state = {
 		}
 	}],
 
-	undo(){
+	undo() {
 
 	},
-	autoSave(){
+	autoSave() {
 		// save to sessionStorage on overflow
 	}
 };
 
 
-let multiAction = {
-	'-': (e, target) => {
-
-		target = target || editor || e.target;
-		let value = '- ',
-			 start = target.selectionStart,
-			 end = target.selectionEnd;
 
 
-		let line = target.value.substring(start - 1, end);
-		let len = (line.split('\n').length - 1) * value.length,
-			 undo = line.startsWith('\n' + value);
-		if (len === 0) format_text(e);
-		else{
-							
-			let startLine = target.value.substring(0, start-1)				
-			line = !undo 
-				? line.replace(new RegExp('\n', 'g'), '\n' + value) 
-				: line.replace(new RegExp('\n' + value, 'g'), '\n');
-			
-			target.value = [startLine, line, target.value.substring(end)].join('');
+function actionApply(doingState, doingType) {
 
-			// target.setSelectionRange(start, end + len * (e.shiftKey ? -1 : 1));
-			target.selectionStart = start;
-			target.selectionEnd = end + len * (undo ? -1 : 1);
-		}
-		e.preventDefault();		
+	if (Boolean(doingType) !== Boolean('redo')) var lostData = doingState.lostData, data = doingState.data;
+	else { 
+		var data = doingState.lostData, 
+			lostData = doingState.data; 
 	}
+
+	switch (doingState.type) {
+		case 'insertFromPaste':
+
+			editor.value = (
+				editor.value.substring(0, doingState.selection.start) + lostData +
+				editor.value.substring(doingState.selection.start + data.length)
+			);
+			editor.setSelectionRange(doingState.selection.start, doingState.selection.end + lostData.length);
+
+			break;
+		case 'insertText':
+
+			if (!doingState.selection_length)
+				editor.value = (
+					editor.value.substring(0, doingState.selection.start) + (lostData || '') +
+					editor.value.substring(doingState.selection.start + 1)
+				);
+
+			editor.setSelectionRange(
+				doingState.selection.start, doingState.selection.end + lostData.length
+			);
+			break;
+		case 'deleteByCut': // either cut approach
+		case 'deleteContentForward': // del on sel.len == 0
+		case 'deleteContentBackward': // all other approaches to del
+			editor.value = (
+				editor.value.substring(0, doingState.selection.start) + lostData +
+				editor.value.substring(doingState.selection.end)
+			);
+
+			editor.selectionStart = editor.selectionEnd = (
+				doingState.selection.start +
+				(
+					doingState.type == InputActionType.deleteContentBackward && lostData.length <= 1
+				)
+			);
+
+			if (lostData.length > 1) {
+				editor.selectionEnd = selection.start + lostData.length;
+			}
+			break;
+	}	
 }
 
-
+/**
+ * в отличие от format_text(e) 
+ * - обрабатывает случаи для таб
+ * - триггерится только нажатием горячих клавиш по текстареа
+ * 
+ * @param {*} event 
+ */
 function preformat(event) {
 
 	// console.log(event);
-	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : alert('todo');
-	else if (event.key.toLowerCase() === 'tab'){
-		
+	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : undo(event);
+	else if (event.key.toLowerCase() === 'tab') {
+
 		// определим, выделен ли текст
 		let start = event.target.selectionStart;
 		let end = event.target.selectionEnd;
 		if (end - start > 0) {
-			
-			let line = event.target.value.substring(start-1, end);
+
+			let line = event.target.value.substring(start - 1, end);
 			let len = line.split('\n').length - 1;
 			if (len === 0) format_text(event);
-			else{
-								
-				let startLine = event.target.value.substring(0, start-1)				
+			else {
+
+				let startLine = event.target.value.substring(0, start - 1)
 				line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
-				let endLine = event.target.value.substring(end);				
+				let endLine = event.target.value.substring(end);
 				event.target.value = [startLine, line, endLine].join('');
 
 				event.target.selectionStart = start;
@@ -106,8 +250,13 @@ function preformat(event) {
 	}
 }
 
-
-function format_text(event) {	
+/**
+ * форматирует выделенный фрагмент или строку, в которой находится каретка в текущий момент, 
+ * в соответствии с заданными правилами (actions и multiActions соответственно)
+ * @param {*} event 
+ * @param {*} fake - эмуляция нажатого символа (опционально) для событий, не передающих нажатие клавиш (e.key)
+ */
+function format_text(event, fake) {
 
 
 	let caret = null || 0;
@@ -115,13 +264,13 @@ function format_text(event) {
 
 	// получаем позицию курсора
 	if (editor.selectionStart !== undefined) {
-		if (editor.selectionStart < editor.selectionEnd){
+		if (editor.selectionStart < editor.selectionEnd) {
 			event.key = event.key || event.target.getAttribute('data-key');
-			if (multiAction[event.key]){
+			if (multiActions[event.key]) {
 
-				multiAction[event.key](event);
+				multiActions[event.key](event);
 				return;
-			}			
+			}
 		}
 		caret = editor.selectionStart;
 	}
@@ -145,7 +294,7 @@ function format_text(event) {
 
 	// actions.get(event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined)))
 
-	var formatAction = actions[event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined))];
+	var formatAction = actions[event && (event.key || fake)];
 	if (formatAction) var preformat = formatAction(line, event);
 	else {
 		return;
