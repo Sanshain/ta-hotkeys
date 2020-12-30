@@ -3,7 +3,10 @@
 redoLog = (() => { });
 // redoLog = redoLog || (() => { });
 
-const editor = document.getElementById('editor');
+const editor = document.getElementById('editor'),
+	  undoStorage = [], 
+	  redoStorage = [];
+
 editor.addEventListener('keydown', function (event) {
 	
 	// console.log(event)
@@ -76,30 +79,7 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 	else redoLog(undoStorage);
 });
 
-const undoStorage = [];
-const redoStorage = [];
 
-const redo = (e) => {
-	let redoState = redoStorage.pop();
-	if (redoState) {
-		undoStorage.push(redoState), redoLog();
-		
-		actionApply(redoState, 'redo');
-		e.preventDefault();
-	}
-	
-}
-const undo = (e) => {
-	if (e.shiftKey) return redo(e);
-
-	let undoState = undoStorage.pop();
-	if (undoState) {
-		redoStorage.push(undoState), redoLog();
-
-		actionApply(undoState, '');
-		e.preventDefault();
-	}
-}
 const input = {
 
 	type: null,		// 'insertFromPaste' | 'deleteByCut' | 'insertText' | 'deleteContentBackward' | ...
@@ -112,38 +92,6 @@ const input = {
 		end: null
 	},
 }
-
-const InputActionType =
-{
-	insertFromPaste: 'insertFromPaste',					// get selection (keydown) and clipboardData (paste)
-	deleteByCut: 'deleteByCut',							// get selection (keydown) 
-	insertText: 'insertText',							// get data (input) and selection (keydown)
-	deleteContentBackward: 'deleteContentBackward',		// get selection (keydown)
-	deleteContentForward: 'deleteContentForward'		// get selection (keydown)
-}
-
-
-// const state = {
-// 	storageLimit: 20,							// count elements
-// 	smartStorageLimit: 500,					// kb size
-// 	storageSaveOn: '',							// on 'timeDebounce|enterKey'
-
-// 	undoStorage: [{
-// 		value: editor.value,
-// 		state: {
-// 			start: editor.selectionStart,
-// 			end: editor.selectionEnd
-// 		}
-// 	}],
-
-// 	undo() {
-
-// 	},
-// 	autoSave() {
-// 		// save to sessionStorage on overflow
-// 	}
-// };
-
 
 
 
@@ -197,4 +145,45 @@ function actionApply(doingState, doingType) {
 			
 			break;
 	}	
+}
+
+
+
+
+
+
+
+
+
+
+const InputActionType =
+{
+	insertFromPaste: 'insertFromPaste',					// get selection (keydown) and clipboardData (paste)
+	deleteByCut: 'deleteByCut',							// get selection (keydown) 
+	insertText: 'insertText',							// get data (input) and selection (keydown)
+	deleteContentBackward: 'deleteContentBackward',		// get selection (keydown)
+	deleteContentForward: 'deleteContentForward'		// get selection (keydown)
+}
+
+
+const redo = (e) => {
+	let redoState = redoStorage.pop();
+	if (redoState) {
+		undoStorage.push(redoState), redoLog();
+		
+		actionApply(redoState, 'redo');
+		e.preventDefault();
+	}
+	
+}
+const undo = (e) => {
+	if (e.shiftKey) return redo(e);
+
+	let undoState = undoStorage.pop();
+	if (undoState) {
+		redoStorage.push(undoState), redoLog();
+
+		actionApply(undoState, '');
+		e.preventDefault();
+	}
 }

@@ -25,10 +25,10 @@ function preformat(event) {
 
 				// так для IE не будет работать 
 				event.target.dispatchEvent(new KeyboardEvent('keydown'));
-				event.target.dispatchEvent(new InputEvent('input',{
-					data: event.target.value.slice(event.target.selectionStart, event.target.selectionEnd),
-					inputType: 'deleteContentBackward'
-				}));
+				// event.target.dispatchEvent(new InputEvent('input',{
+				// 	data: event.target.value.slice(event.target.selectionStart, event.target.selectionEnd),
+				// 	inputType: 'deleteContentBackward'
+				// }));
 
 
 				let startLine = event.target.value.substring(0, start - 1)
@@ -43,11 +43,14 @@ function preformat(event) {
 
 				// так для IE не будет работать 
 				let transfer = new DataTransfer();
-				transfer.setData('text/plain', line);
+				transfer.setData('text/plain', 
+					event.target.value.slice(event.target.selectionStart, event.target.selectionEnd  // or line.slice(1)
+				));
 				let clipboardEvent = new ClipboardEvent('paste', {
 					clipboardData: transfer
 				})				
 
+				// event.target.dispatchEvent(new KeyboardEvent('keydown'));
 				event.target.dispatchEvent(clipboardEvent);
 				event.target.dispatchEvent(new InputEvent('input',{
 					data: null,
