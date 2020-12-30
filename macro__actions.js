@@ -67,7 +67,27 @@ var multiMacro = {
 			target.selectionEnd = end + len * (undo ? -1 : 1);
 		}
 		e.preventDefault();
-	}
+	},
+	begin_end: (value, e, target) => {
+
+		let start = target.selectionStart,
+			end = target.selectionEnd;
+		let line = target.value.substring(start, end);
+
+		if (line.split('\n').length === 1) format_text(e); 							// todo ?
+		else {
+	
+			let startText = target.value.substring(0, start);
+			line = value[0] + target.value.substring(start, end) + value[1];
+			let endText = target.value.substring(end);
+			target.value = [startText, line, endText].join('');
+	
+			// target.setSelectionRange(start, end + len * (e.shiftKey ? -1 : 1));
+			// target.selectionStart = start + value[0].length;
+			target.selectionStart = target.selectionEnd = end + value[0].length + value[1].length;
+		}
+		e.preventDefault();
+	}	
 
 
 }
