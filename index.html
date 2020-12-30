@@ -52,12 +52,17 @@ sf
 
 			'-': (line) => actions.begin('# ', line),
 			'Tab': (line, event) => actions.begin('	', line, event),
-			'/': (line) => actions.tag_in('center', line),
+
+			// '*': (line) => actions.begin_end('``', line),
+			'*': (line) => actions.begin_end(['```', '```'], line),
+
+			'/': (line) => actions.tag_in('center', line),			
 		}
 
 		let multiActions = { __proto__: multiMacro,
 
-			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target)
+			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
+			// '*': (e, target) => multiActions.begin('- ', e, target || editor || e.target)
 		}
 
 		window.addEventListener('load', () => editor.focus());

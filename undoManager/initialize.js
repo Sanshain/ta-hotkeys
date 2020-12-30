@@ -176,6 +176,27 @@ const storeMultiactions = function(event, callback){
 		inputType: 'insertFromPaste'
 	}));	
 }
+const storeAction = function(event, callback, kwargs){
+	event.target.selectionStart = kwargs.startLine + 1;
+	event.target.selectionEnd = kwargs.endLine;
+	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));		
+
+	let preformat = callback(event);
+
+	let transfer = new DataTransfer(); 					// так для IE не будет работать
+	transfer.setData('text/plain', event.target.value.substr(kwargs.startLine + 1, preformat.line.length));
+	let clipboardEvent = new ClipboardEvent('paste', { clipboardData: transfer })
+
+	event.target.dispatchEvent(clipboardEvent);
+	input.caret = 123;
+	event.target.dispatchEvent(new InputEvent('input',{	// так для IE не будет работать 
+		data: null,
+		inputType: 'insertFromPaste'
+	}));	
+	input.caret = undefined;
+	
+	return preformat;
+}
 
 
 const InputActionType =

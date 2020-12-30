@@ -1,6 +1,10 @@
 var actionsMacro = {
 
-	tag_in (value, line) { return this.begin_end(['<'+value+'>', '</'+value+'>'], line); },
+	tag_in (value, line) { 
+		let res = this.begin_end(['<'+value+'>', '</'+value+'>'], line); 
+		res.offset += res.offset + 1;
+		return res;
+	},
 
 	
 	begin_end:  (value, line) => {
@@ -23,7 +27,7 @@ var actionsMacro = {
 		// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
 
 		const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
-		let undoFlag = !event ? regex.exec(line) : event.shiftKey;				
+		let undoFlag = !event ? regex.exec(line) : event.shiftKey;		
 		return {
 			// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
 			line: undoFlag ? line.replace(regex, '$1') : value + line,

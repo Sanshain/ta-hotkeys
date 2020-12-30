@@ -67,6 +67,10 @@ function format_text(event, fake) {
 					return;
 				}
 			}
+			else{
+				// if(middlelineActions[event.key](event)) return; - // todo				
+				// замена посреди строки (для ссылок и курсивного текста, например)
+			}
 		}
 		caret = editor.selectionStart;
 	}
@@ -95,38 +99,22 @@ function format_text(event, fake) {
 	var formatAction = actions[event && (event.key || fake)];
 	if (formatAction) {
 
-		event.target.selectionStart = startLine + 1;
-		event.target.selectionEnd = endLine;
-		event.target.dispatchEvent(new KeyboardEvent('keydown', {}));		
+		let preformat = storeAction(event, () => {
+			var preformat = formatAction(line, event);			
+			editor.value = preLine + preformat.line + postLine;
+			return preformat; },{
+			startLine: startLine, endLine: endLine
+		})
 
-
-		var preformat = formatAction(line, event);
-		// заменяем текст
-		editor.value = preLine + preformat.line + postLine;
-
-
-		let transfer = new DataTransfer(); 					// так для IE не будет работать
-		transfer.setData('text/plain', event.target.value.substr(startLine + 1, preformat.line.length));
-		let clipboardEvent = new ClipboardEvent('paste', { clipboardData: transfer })
-	
-		event.target.dispatchEvent(clipboardEvent);
-		input.caret = 123;
-		event.target.dispatchEvent(new InputEvent('input',{	// так для IE не будет работать 
-			data: null,
-			inputType: 'insertFromPaste'
-		}));	
-		input.caret = undefined;
-
+		if (preformat.eventAbort) event.preventDefault();
 		// возвращаем выделение
 		editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);				
-
+		
 	}
 	else {
 		return;
 	}
 
 	editor.focus();
-
-	if (preformat.eventAbort) event.preventDefault();
 
 }
