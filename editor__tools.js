@@ -56,14 +56,16 @@ function format_text(event, fake) {
 	// получаем позицию курсора
 	if (editor.selectionStart !== undefined) {
 		if (editor.selectionStart < editor.selectionEnd) {
-			event.key = event.key || event.target.getAttribute('data-key');
-			if (multiActions[event.key]) {
-
-				event.target.dispatchEvent(new KeyboardEvent('keydown'));
-
-				storeMultiactions(event, () => multiActions[event.key](event));
-
-				return;
+			if (editor.value.slice(editor.selectionStart, editor.selectionEnd).split('\n').length > 1) {
+				event.key = event.key || event.target.getAttribute('data-key');
+				if (multiActions[event.key]) {
+	
+					event.target.dispatchEvent(new KeyboardEvent('keydown'));
+	
+					storeMultiactions(event, () => multiActions[event.key](event));
+	
+					return;
+				}
 			}
 		}
 		caret = editor.selectionStart;
@@ -91,16 +93,38 @@ function format_text(event, fake) {
 
 	// !todo undoMaager binding:
 	var formatAction = actions[event && (event.key || fake)];
-	if (formatAction) var preformat = formatAction(line, event);
+	if (formatAction) {
+
+		event.target.selectionStart = startLine + 1;
+		event.target.selectionEnd = endLine;
+		event.target.dispatchEvent(new KeyboardEvent('keydown', {}));		
+
+
+		var preformat = formatAction(line, event);
+		// заменяем текст
+		editor.value = preLine + preformat.line + postLine;
+
+
+		let transfer = new DataTransfer(); 					// так для IE не будет работать
+		transfer.setData('text/plain', event.target.value.substr(startLine + 1, preformat.line.length));
+		let clipboardEvent = new ClipboardEvent('paste', { clipboardData: transfer })
+	
+		event.target.dispatchEvent(clipboardEvent);
+		input.caret = 123;
+		event.target.dispatchEvent(new InputEvent('input',{	// так для IE не будет работать 
+			data: null,
+			inputType: 'insertFromPaste'
+		}));	
+		input.caret = undefined;
+
+		// возвращаем выделение
+		editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);				
+
+	}
 	else {
 		return;
 	}
 
-	// заменяем текст
-	editor.value = preLine + preformat.line + postLine;
-
-	// возвращаем выделение
-	editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);
 	editor.focus();
 
 	if (preformat.eventAbort) event.preventDefault();

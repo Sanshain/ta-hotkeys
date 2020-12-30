@@ -10,7 +10,7 @@ const editor = document.getElementById('editor'),
 editor.addEventListener('keydown', function (event) {
 	
 	// console.log(event)
-
+	
 	input.selection = {
 		start: event.target.selectionStart,
 		end: event.target.selectionEnd,
@@ -111,6 +111,7 @@ function actionApply(doingState, doingType) {
 				editor.value.substring(doingState.selection.start + data.length)
 			);
 			editor.setSelectionRange(doingState.selection.start, doingState.selection.end + lostData.length);
+			if (doingState.caret) editor.selectionStart = editor.selectionEnd;
 
 			break;
 		case 'insertText':
