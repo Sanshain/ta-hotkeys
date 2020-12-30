@@ -21,46 +21,18 @@ function preformat(event) {
 			let len = line.split('\n').length - 1;
 			if (len === 0) format_text(event);
 			else {
+				
+				storeMultiactions(event, () => {
 
+					let startLine = event.target.value.substring(0, start - 1)
+					line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
+					let endLine = event.target.value.substring(end);
+					event.target.value = [startLine, line, endLine].join('');
+	
+					event.target.selectionStart = start;
+					event.target.selectionEnd = end + len * (event.shiftKey ? -1 : 1);
 
-				// так для IE не будет работать 
-				event.target.dispatchEvent(new KeyboardEvent('keydown'));
-				// event.target.dispatchEvent(new InputEvent('input',{
-				// 	data: event.target.value.slice(event.target.selectionStart, event.target.selectionEnd),
-				// 	inputType: 'deleteContentBackward'
-				// }));
-
-
-				let startLine = event.target.value.substring(0, start - 1)
-				line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
-				let endLine = event.target.value.substring(end);
-				event.target.value = [startLine, line, endLine].join('');
-
-				event.target.selectionStart = start;
-				event.target.selectionEnd = end + len * (event.shiftKey ? -1 : 1);
-
-
-
-				// так для IE не будет работать 
-				let transfer = new DataTransfer();
-				transfer.setData('text/plain', 
-					event.target.value.slice(event.target.selectionStart, event.target.selectionEnd  // or line.slice(1)
-				));
-				let clipboardEvent = new ClipboardEvent('paste', {
-					clipboardData: transfer
-				})				
-
-				// event.target.dispatchEvent(new KeyboardEvent('keydown'));
-				event.target.dispatchEvent(clipboardEvent);
-				event.target.dispatchEvent(new InputEvent('input',{
-					data: null,
-					inputType: 'insertFromPaste'
-				}));
-
-
-
-				// var pressTabKey = document.createEvent("KeyboardEvent");
-				// pressTabKey.initKeyboardEvent("keypress", true, true, null, false, false, false, false, 9, 0);
+				})
 
 			}
 			event.preventDefault();
@@ -87,7 +59,10 @@ function format_text(event, fake) {
 			event.key = event.key || event.target.getAttribute('data-key');
 			if (multiActions[event.key]) {
 
-				multiActions[event.key](event);
+				event.target.dispatchEvent(new KeyboardEvent('keydown'));
+
+				storeMultiactions(event, () => multiActions[event.key](event));
+
 				return;
 			}
 		}
@@ -113,6 +88,8 @@ function format_text(event, fake) {
 
 	// actions.get(event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined)))
 
+
+	// !todo undoMaager binding:
 	var formatAction = actions[event && (event.key || fake)];
 	if (formatAction) var preformat = formatAction(line, event);
 	else {

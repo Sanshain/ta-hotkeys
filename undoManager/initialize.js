@@ -155,6 +155,27 @@ function actionApply(doingState, doingType) {
 
 
 
+const storeMultiactions = function(event, callback){
+
+	event.target.dispatchEvent(new KeyboardEvent('keydown'));
+
+	callback(event);											// multiActions[event.key](event);
+
+	let transfer = new DataTransfer();							// так для IE не будет работать
+	transfer.setData('text/plain', 
+		event.target.value.slice(event.target.selectionStart, event.target.selectionEnd  // or line.slice(1)
+	));
+	let clipboardEvent = new ClipboardEvent('paste', {
+		clipboardData: transfer
+	})
+
+	event.target.dispatchEvent(clipboardEvent);
+	event.target.dispatchEvent(new InputEvent('input',{			// так для IE не будет работать 
+		data: null,
+		inputType: 'insertFromPaste'
+	}));	
+}
+
 
 const InputActionType =
 {
