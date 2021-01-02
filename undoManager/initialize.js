@@ -1,7 +1,7 @@
 // @ts-nocheck
 
-redoLog = (() => { });
-// redoLog = redoLog || (() => { });
+// redoLog = (() => { });
+redoLog = redoLog || (() => { });
 
 const editor = document.getElementById('editor'),
 	  undoStorage = [], 

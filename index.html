@@ -18,12 +18,20 @@
 			tab-size: 4;
 		}
 		.log__redo{
+			opacity: 0.1;
 			background-color: lightgray;
 			margin: 1em;
 			width: 90%;			
 			padding: 5px;
     		font-family: monospace;		
 			overflow-wrap: break-word;	
+		}
+		.help{
+			opacity: 0.5;
+			transition: .5s;
+		}
+		.help:hover{
+			opacity: 1;
 		}
 	</style>
 </head>
@@ -37,8 +45,18 @@ sdf sdf
 sf		sdf sdf
 sf 		
 	</textarea>
-	<button onclick="format_text(event, '/')">click for centered</button>
+	<button onclick="format_text(event, '/')">click to centered</button>
 	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
+	<div class="help">
+		<h5>Hold down one of te following key combinations on pc keyboard to see amazing opportunities:</h5>
+
+		<ul>
+			<li><b></b>ctrl+&#60;-&#62; - h1 tag</li>
+			<li><b>ctrl+&#60;*&#62;</b> - places inside quotation marks</li>
+			<li><b>ctrl+&#60;Tab&#62;</b> - make begin offset</li>
+			<li><b>ctrl+&#60;/&#62;</b> - palce inside &#60;center&#62; tag</li>
+		</ul>
+	</div>
 	<div class="log__undo"></div>
 	<div class="log__redo"></div>
 
