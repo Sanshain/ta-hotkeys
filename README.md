@@ -2,13 +2,9 @@
 
 ### Textarea with hot keys 
 
-A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. Example:
+A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. Explore the following example:
 
-```html
-<textarea name="" id="editor" rows="10"></textarea>
-<button data-key='/' id='center__alignment'>click here</button>
-<script src="./__release__/hotkeys.js"></script>
-<script>
+```js
 window.addEventListener('load', () => {
 
 	hokInit(document.getElementById('editor'), {
@@ -27,5 +23,13 @@ window.addEventListener('load', () => {
 
 	editor.focus();
 });
-</script>
 ```
+
+for html page: 
+
+```
+<textarea name="" id="editor" rows="10"></textarea>
+<button data-key='/' id='center__alignment'>click here</button>
+<script src="./__release__/hotkeys.js"></script>
+```
+
