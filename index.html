@@ -31,24 +31,11 @@
 
 <body>
 
-	<textarea name="" id="editor" rows="10">
-sdfsfsf
-sdfsfs
-sdf sdf
-sf		sdf sdf
-sf 		
-	</textarea>
-	<button data-key='/' id='center__alignment'>click for centered</button>
+	<textarea name="" id="editor" rows="10"></textarea>
+	<button data-key='/' id='center__alignment'>click here</button>
 	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
 	<div class="log__undo"></div>
 	<div class="log__redo"></div>
-	<div class="panel">
-		<div id="id1">
-			<div id="sub_id"></div>
-		</div>
-		<div id="id2"></div>
-		<div id="id3"></div>
-	</div>
 
 	<!-- <script src="undoManager/logs.js"></script>
 	<script src="undoManager/initialize.js"></script>
@@ -85,7 +72,8 @@ sf
 				multiActions: multiActions
 			},[ document.getElementById('center__alignment') ])
 
-			editor.focus();
+			for (let i = 0; i < 7; i++) editor.value += `line ${i+1}\n`;			
+			editor.focus();			
 		});
 	</script>
 </body>
