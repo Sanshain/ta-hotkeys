@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+<<<<<<< HEAD
 // redoLog = (() => { });
 redoLog = redoLog || (() => { });
 
@@ -228,15 +229,16 @@ const state = {
 
 
 
+=======
+>>>>>>> module
 /**
- * в отличие от format_text(e) 
+ * в отличие от format_text(e)  
+ * - триггерится только на текстареа (через нажатие горячих клавиш)
  * - обрабатывает случаи для таб
- * - триггерится только нажатием горячих клавиш по текстареа
- * 
  * @param {*} event 
  */
 function preformat(event) {
-
+	
 	// console.log(event);
 	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : undo(event);
 	else if (event.key.toLowerCase() === 'tab') {
@@ -250,14 +252,19 @@ function preformat(event) {
 			let len = line.split('\n').length - 1;
 			if (len === 0) format_text(event);
 			else {
+				
+				storeMultiactions(event, () => {
 
-				let startLine = event.target.value.substring(0, start - 1)
-				line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
-				let endLine = event.target.value.substring(end);
-				event.target.value = [startLine, line, endLine].join('');
+					let startLine = event.target.value.substring(0, start - 1)
+					line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
+					let endLine = event.target.value.substring(end);
+					event.target.value = [startLine, line, endLine].join('');
+	
+					event.target.selectionStart = start;
+					event.target.selectionEnd = end + len * (event.shiftKey ? -1 : 1);
 
-				event.target.selectionStart = start;
-				event.target.selectionEnd = end + len * (event.shiftKey ? -1 : 1);
+				})
+
 			}
 			event.preventDefault();
 		}
@@ -280,11 +287,24 @@ function format_text(event, fake) {
 	// получаем позицию курсора
 	if (editor.selectionStart !== undefined) {
 		if (editor.selectionStart < editor.selectionEnd) {
-			event.key = event.key || event.target.getAttribute('data-key');
-			if (multiActions[event.key]) {
-
-				multiActions[event.key](event);
-				return;
+			if (editor.value.slice(editor.selectionStart, editor.selectionEnd).split('\n').length > 1) {
+				event.key = event.key || event.target.getAttribute('data-key');
+				if (multiActions[event.key]) {
+	
+					event.target.dispatchEvent(new KeyboardEvent('keydown'));
+	
+					storeMultiactions(
+						event, 
+						() => multiActions[event.key](event),
+						// opts => editor.selectionStart = editor.selectionEnd = editor.selectionEnd - opts.backoffset
+					);
+	
+					return;
+				}
+			}
+			else{
+				// if(middlelineActions[event.key](event)) return; - // todo				
+				// замена посреди строки (для ссылок и курсивного текста, например)
 			}
 		}
 		caret = editor.selectionStart;
@@ -309,19 +329,28 @@ function format_text(event, fake) {
 
 	// actions.get(event && (event.key || (event.target.tagName.toLowerCase() === 'button' ? '/' : undefined)))
 
-	var formatAction = actions[event && (event.key || fake)];
-	if (formatAction) var preformat = formatAction(line, event);
+
+	// !todo undoMaager binding:
+	var formatAction = actions[event && (event.key || fake)];		
+	if (!event.key) event = {target: editor};						 // для кнопки нужно подменить target
+	if (formatAction) {
+
+		let preformat = storeAction(event, () => {
+			var preformat = formatAction(line, event);			
+			editor.value = preLine + preformat.line + postLine;
+			return preformat; },{
+			startLine: startLine, endLine: endLine
+		})
+
+		if (preformat.eventAbort) event.preventDefault();
+		// возвращаем выделение
+		editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);				
+		
+	}
 	else {
 		return;
 	}
 
-	// заменяем текст
-	editor.value = preLine + preformat.line + postLine;
-
-	// возвращаем выделение
-	editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);
 	editor.focus();
-
-	if (preformat.eventAbort) event.preventDefault();
 
 }

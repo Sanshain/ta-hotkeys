@@ -1,6 +1,11 @@
+// @ts-nocheck
 var actionsMacro = {
 
-	tag_in (value, line) { return this.begin_end(['<'+value+'>', '</'+value+'>'], line); },
+	tag_in (value, line) { 
+		let res = this.begin_end(['<'+value+'>', '</'+value+'>'], line); 
+		res.offset += res.offset + 1;
+		return res;
+	},
 
 	
 	begin_end:  (value, line) => {
@@ -23,7 +28,7 @@ var actionsMacro = {
 		// const regex = new RegExp('^' + value + '([\\s\\S]+?)$').compile(); # err
 
 		const regex = new RegExp('^' + value + '([\\s\\S]+?)$');
-		let undoFlag = !event ? regex.exec(line) : event.shiftKey;				
+		let undoFlag = !event ? regex.exec(line) : event.shiftKey;		
 		return {
 			// line: undoFlag ? line.replace(/# ([\s\S]*?)/, '$1') : value + line,
 			line: undoFlag ? line.replace(regex, '$1') : value + line,
@@ -63,7 +68,28 @@ var multiMacro = {
 			target.selectionEnd = end + len * (undo ? -1 : 1);
 		}
 		e.preventDefault();
-	}
+	},
+	begin_end: (value, e, target) => {
+
+		let start = target.selectionStart,
+			end = target.selectionEnd;
+		let line = target.value.substring(start, end);
+
+		if (line.split('\n').length === 1) format_text(e); 							// todo ?
+		else {
+	
+			let startText = target.value.substring(0, start);
+			line = value[0] + target.value.substring(start, end) + value[1];
+			let endText = target.value.substring(end);
+			target.value = [startText, line, endText].join('');
+	
+			target.setSelectionRange(start, end + value[0].length + value[1].length);
+			// target.selectionStart = start + value[0].length;
+			// target.selectionStart = target.selectionEnd = end + value[0].length + value[1].length;
+		}
+		e.preventDefault();
+		return { backoffset: value[1].length }
+	}	
 
 
 }

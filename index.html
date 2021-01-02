@@ -42,7 +42,8 @@ sf
 	<div class="log__undo"></div>
 	<div class="log__redo"></div>
 
-	<script src="undoManager/Log.js"></script>
+	<script src="undoManager/logs.js"></script>
+	<script src="undoManager/initialize.js"></script>
 	<script src="macro__actions.js"></script>
 	<script src="editor__tools.js"></script>
 	<script>
@@ -51,12 +52,17 @@ sf
 
 			'-': (line) => actions.begin('# ', line),
 			'Tab': (line, event) => actions.begin('	', line, event),
-			'/': (line) => actions.tag_in('center', line),
+
+			// '*': (line) => actions.begin_end('``', line),
+			'*': (line) => actions.begin_end(['```\n', '\n```'], line),
+
+			'/': (line) => actions.tag_in('center', line),			
 		}
 
 		let multiActions = { __proto__: multiMacro,
 
-			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target)
+			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
+			'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target)
 		}
 
 		window.addEventListener('load', () => editor.focus());
