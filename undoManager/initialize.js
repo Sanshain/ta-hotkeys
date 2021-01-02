@@ -156,11 +156,11 @@ function actionApply(doingState, doingType) {
 
 
 
-const storeMultiactions = function(event, callback){
+const storeMultiactions = function(event, callback, onfinish){
 
 	event.target.dispatchEvent(new KeyboardEvent('keydown'));
 
-	callback(event);											// multiActions[event.key](event);
+	let opts = callback(event);		 							// multiActions[event.key](event);
 
 	let transfer = new DataTransfer();							// так для IE не будет работать
 	transfer.setData('text/plain', 
@@ -175,6 +175,7 @@ const storeMultiactions = function(event, callback){
 		data: null,
 		inputType: 'insertFromPaste'
 	}));	
+	if (onfinish) onfinish(opts);
 }
 const storeAction = function(event, callback, kwargs){
 	event.target.selectionStart = kwargs.startLine + 1;

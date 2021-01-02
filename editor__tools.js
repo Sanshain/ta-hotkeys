@@ -62,7 +62,11 @@ function format_text(event, fake) {
 	
 					event.target.dispatchEvent(new KeyboardEvent('keydown'));
 	
-					storeMultiactions(event, () => multiActions[event.key](event));
+					storeMultiactions(
+						event, 
+						() => multiActions[event.key](event),
+						// opts => editor.selectionStart = editor.selectionEnd = editor.selectionEnd - opts.backoffset
+					);
 	
 					return;
 				}
@@ -96,7 +100,8 @@ function format_text(event, fake) {
 
 
 	// !todo undoMaager binding:
-	var formatAction = actions[event && (event.key || fake)];
+	var formatAction = actions[event && (event.key || fake)];		
+	if (!event.key) event = {target: editor};						 // для кнопки нужно подменить target
 	if (formatAction) {
 
 		let preformat = storeAction(event, () => {

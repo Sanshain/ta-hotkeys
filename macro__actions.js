@@ -1,3 +1,4 @@
+// @ts-nocheck
 var actionsMacro = {
 
 	tag_in (value, line) { 
@@ -82,11 +83,12 @@ var multiMacro = {
 			let endText = target.value.substring(end);
 			target.value = [startText, line, endText].join('');
 	
-			// target.setSelectionRange(start, end + len * (e.shiftKey ? -1 : 1));
+			target.setSelectionRange(start, end + value[0].length + value[1].length);
 			// target.selectionStart = start + value[0].length;
-			target.selectionStart = target.selectionEnd = end + value[0].length + value[1].length;
+			// target.selectionStart = target.selectionEnd = end + value[0].length + value[1].length;
 		}
 		e.preventDefault();
+		return { backoffset: value[1].length }
 	}	
 
 
