@@ -28,7 +28,7 @@ window.addEventListener('load', () => {
 
 for html page: 
 
-```
+```html
 <textarea name="" id="editor" rows="10"></textarea>
 <button data-key='/' id='center__alignment'>click here</button>
 <script src="./__release__/hotkeys.js"></script>
