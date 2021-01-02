@@ -4,7 +4,11 @@
 
 A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. Example:
 
-```js
+```html
+<textarea name="" id="editor" rows="10"></textarea>
+<button data-key='/' id='center__alignment'>click here</button>
+<script src="./__release__/hotkeys.js"></script>
+<script>
 window.addEventListener('load', () => {
 
 	hokInit(document.getElementById('editor'), {
@@ -12,15 +16,16 @@ window.addEventListener('load', () => {
 			'-': (line) => actions.begin('# ', line),
 			'Tab': (line, event) => actions.begin('	', line, event),				
 			'*': (line) => actions.begin_end(['```\n', '\n```'], line),
-			'/': (line) => actions.tag_in('center', line,
+			'/': (line) => actions.tag_in('center', line),
 
-		},
+		}),
 		multiActions: Object.assign(hokInit.multiMacro,{
 			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
 			'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target)
-		}
+		})
 	},[ document.getElementById('center__alignment') ])
 
 	editor.focus();
 });
+</script>
 ```
