@@ -21,6 +21,7 @@ window.addEventListener('load', () => {
 		})
 	},[ document.getElementById('center__alignment') ])
 
+	for (let i = 0; i < 7; i++) editor.value += `line ${i+1}\n`;			
 	editor.focus();
 });
 ```
