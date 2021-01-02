@@ -1,5 +1,42 @@
 // @ts-nocheck
 
+import { storeMultiactions, storeAction, undo } from "./undoManager/initialize";
+import main from './undoManager/initialize';
+import { actionsMacro, multiMacro } from "./macro__actions";
+
+var editor = null,
+	multiActions = {},
+	actions = {};
+
+export default function initialize(target, keys, panel) {
+
+	main(editor = target || document.querySelector('textarea'));
+	if (!(target instanceof HTMLTextAreaElement)) throw new Error('editor with hot keys needs textarea on the page');
+
+	editor.addEventListener('keydown', preformat);
+	if (keys instanceof Object){
+
+		if ('actions' in keys && keys.actions instanceof Object) 
+		{
+			actions = keys.actions;
+			// actions.__proto__ = actionsMacro;
+		}
+		if ('multiActions' in keys && keys.multiActions instanceof Object) {
+
+			multiActions = keys.multiActions;		
+			// multiActions.__proto__ = multiMacro;		
+		}
+	}
+
+	if (panel instanceof HTMLElement) panel = [].slice.apply(panel.querySelectorAll(`.${panel.className}>*`));
+	if (Array.isArray(panel)) {
+		panel.forEach(btn => btn.addEventListener('onclick', format_text));
+	}
+}
+
+initialize.actionsMacro = actionsMacro;
+initialize.multiMacro = multiMacro;
+
 /**
  * в отличие от format_text(e)  
  * - триггерится только на текстареа (через нажатие горячих клавиш)
@@ -47,11 +84,10 @@ function preformat(event) {
  * @param {*} event 
  * @param {*} fake - эмуляция нажатого символа (опционально) для событий, не передающих нажатие клавиш (e.key)
  */
-function format_text(event, fake) {
-
+function format_text(event, fake) {	
 
 	let caret = null || 0;
-
+	fake = fake || event.target.getAttribute('data-key')
 
 	// получаем позицию курсора
 	if (editor.selectionStart !== undefined) {

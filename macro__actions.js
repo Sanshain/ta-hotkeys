@@ -1,5 +1,5 @@
 // @ts-nocheck
-var actionsMacro = {
+export var actionsMacro = {
 
 	tag_in (value, line) { 
 		let res = this.begin_end(['<'+value+'>', '</'+value+'>'], line); 
@@ -41,7 +41,7 @@ var actionsMacro = {
 }
 
 
-var multiMacro = {
+export var multiMacro = {
 
 
 	begin: (value, e, target) => {

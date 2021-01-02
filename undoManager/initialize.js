@@ -1,11 +1,15 @@
 // @ts-nocheck
 
-redoLog = (() => { });
+var redoLog = (() => { });
 // redoLog = redoLog || (() => { });
 
-const editor = document.getElementById('editor'),
-	  undoStorage = [], 
-	  redoStorage = [];
+var editor = document.getElementById('editor') || document.querySelector('textarea'),
+	undoStorage = [], 
+	redoStorage = [];
+
+export default function main(target){
+	editor = target;
+}
 
 editor.addEventListener('keydown', function (event) {
 	
@@ -156,7 +160,7 @@ function actionApply(doingState, doingType) {
 
 
 
-const storeMultiactions = function(event, callback, onfinish){
+export const storeMultiactions = function(event, callback, onfinish){
 
 	event.target.dispatchEvent(new KeyboardEvent('keydown'));
 
@@ -177,7 +181,7 @@ const storeMultiactions = function(event, callback, onfinish){
 	}));	
 	if (onfinish) onfinish(opts);
 }
-const storeAction = function(event, callback, kwargs){
+export const storeAction = function(event, callback, kwargs){
 	event.target.selectionStart = kwargs.startLine + 1;
 	event.target.selectionEnd = kwargs.endLine;
 	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));		
@@ -220,7 +224,7 @@ const redo = (e) => {
 	}
 	
 }
-const undo = (e) => {
+export const undo = (e) => {
 	if (e.shiftKey) return redo(e);
 
 	let undoState = undoStorage.pop();

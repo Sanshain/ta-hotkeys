@@ -17,55 +17,76 @@
 			-o-tab-size: 4;
 			tab-size: 4;
 		}
-		.log__redo{
+
+		.log__redo {
 			background-color: lightgray;
 			margin: 1em;
-			width: 90%;			
+			width: 90%;
 			padding: 5px;
-    		font-family: monospace;		
-			overflow-wrap: break-word;	
+			font-family: monospace;
+			overflow-wrap: break-word;
 		}
 	</style>
 </head>
 
 <body>
 
-	<textarea name="" id="editor" rows="10" onkeydown='preformat(event)'>
+	<textarea name="" id="editor" rows="10">
 sdfsfsf
 sdfsfs
 sdf sdf
 sf		sdf sdf
 sf 		
 	</textarea>
-	<button onclick="format_text(event, '/')">click for centered</button>
+	<button data-key='/' id='center__alignment'>click for centered</button>
 	<div style="text-align: center;">or press `ctrl + /` in textarea</div>
 	<div class="log__undo"></div>
 	<div class="log__redo"></div>
+	<div class="panel">
+		<div id="id1">
+			<div id="sub_id"></div>
+		</div>
+		<div id="id2"></div>
+		<div id="id3"></div>
+	</div>
 
-	<script src="undoManager/logs.js"></script>
+	<!-- <script src="undoManager/logs.js"></script>
 	<script src="undoManager/initialize.js"></script>
 	<script src="macro__actions.js"></script>
-	<script src="editor__tools.js"></script>
+	<script src="editor__tools.js"></script> -->
+	<script src="./__release__/hotkeys.js"></script>
 	<script>
+		
 
-		var actions = {__proto__: actionsMacro,
+		window.addEventListener('load', () => {
 
-			'-': (line) => actions.begin('# ', line),
-			'Tab': (line, event) => actions.begin('	', line, event),
+			var actions = Object.assign(hokInit.actionsMacro, { 
 
-			// '*': (line) => actions.begin_end('``', line),
-			'*': (line) => actions.begin_end(['```\n', '\n```'], line),
+				'-': (line) => actions.begin('# ', line),
+				'Tab': (line, event) => actions.begin('	', line, event),
 
-			'/': (line) => actions.tag_in('center', line),			
-		}
+				// '*': (line) => actions.begin_end('``', line),
+				'*': (line) => actions.begin_end(['```\n', '\n```'], line),
 
-		let multiActions = { __proto__: multiMacro,
+				'/': (line) => {
+					return actions.tag_in('center', line)
+				},
 
-			'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
-			'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target)
-		}
+			});
+			
+			let multiActions = Object.assign(hokInit.multiMacro,{
 
-		window.addEventListener('load', () => editor.focus());
+				'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
+				'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target)
+			})
+
+			hokInit(document.getElementById('editor'), {
+				actions: actions,
+				multiActions: multiActions
+			},[ document.getElementById('center__alignment') ])
+
+			editor.focus();
+		});
 	</script>
 </body>
 
