@@ -4,6 +4,10 @@
 
 A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. 
 
+### Demo
+
+You can see an example of the work [here](https://sanshain.github.io/ta-hotkeys/)
+
 ### Get started
 
 Explore the following example:
@@ -37,4 +41,11 @@ for html page:
 <button data-key='/' id='center__alignment'>click here</button>
 <script src="./__release__/hotkeys.js"></script>
 ```
+
+### Installation
+
+- Use the script tag with the attribute src: `<script src="./hotkeys.js"></script>`
+- install as npm package `npm i Sanshain/ta-hotkeys` (in drafting)(only for module branch)
+- use `git clone https://github.com/Sanshain/ta-hotkeys.git` and independently build it via rollup (only for module branch)
+
 
