@@ -2,7 +2,11 @@
 
 ### Textarea with hot keys 
 
-A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. Explore the following example:
+A package designed to extend the functionality of textarea using hotkeys. Provides a powerfull and lightweight API for creating and configuring hotkeys. 
+
+### Get started
+
+Explore the following example:
 
 ```js
 window.addEventListener('load', () => {
