@@ -108,25 +108,34 @@ export var multiMacro = {
 	inline: (value, e, target, position, condition) => {
 
 		let start = target.selectionStart, end = target.selectionEnd;
-		let line = target.value.substring(start, end);
-		// alert(JSON.stringify(input))
+		let line = target.value.substring(start, end);		
+		
 		if (line.indexOf('\n') > 0) return;
 		else{
-			buffer.paste = (e, _buff) => { if (!condition(_buff)) return;
-
+			buffer.paste = (event, _buff) => { if (!condition(_buff)) return;
+				
 				let startText = target.value.substring(0, start);
 				line = value.replace('%1', line).replace('%2', _buff)				
 				let endText = target.value.substring(end);
 				target.value = [startText, line, endText].join('');	
+				target.selectionEnd = (target.selectionStart = start) + line.length;
+				event.preventDefault();
+				buffer.paste = null;
+
+				let transfer = new DataTransfer(); 			    		// так для IE не будет работать
+				transfer.setData('text/plain', line);				
+				event.target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer }));				
+				target.dispatchEvent(new InputEvent('input', {			// так для IE не будет работать 
+					data: null,
+					inputType: 'insertFromPaste'
+				}));
 
 				if (position === finalPosition.End) {
-					target.selectionStart = target.selectionEnd = start + line.length
+					target.selectionStart = target.selectionEnd = start + line.length;
 				}
 
-				e.preventDefault();
-				buffer.paste = null;
 			}		
-		}		
+		}
 		// return { backoffset: 0 }
 	}
 
