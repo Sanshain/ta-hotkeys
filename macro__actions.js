@@ -105,7 +105,7 @@ export var multiMacro = {
 		e.preventDefault();
 		return { backoffset: undefined } // value[1].length
 	},
-	inline: (value, e, target, position, condition) => {
+	paste_inline: (value, e, target, position, condition) => {
 
 		let start = target.selectionStart, end = target.selectionEnd;
 		let line = target.value.substring(start, end);		
@@ -115,7 +115,7 @@ export var multiMacro = {
 			buffer.paste = (event, _buff) => { if (!condition(_buff)) return;
 				
 				let startText = target.value.substring(0, start);
-				line = value.replace('%1', line).replace('%2', _buff)				
+				line = value.replace('%1', line).replace('$1', _buff)				
 				let endText = target.value.substring(end);
 				target.value = [startText, line, endText].join('');	
 				target.selectionEnd = (target.selectionStart = start) + line.length;

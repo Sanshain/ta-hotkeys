@@ -43,7 +43,7 @@ editor.addEventListener('paste', e => {
 });
 editor.addEventListener('input', event => {			// event.inputType && event.data	
 
-	console.log(event)
+	// console.log(event)
 
 	if (event.inputType == 'historyUndo') {
 		console.log(event.inputType);

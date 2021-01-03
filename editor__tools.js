@@ -34,6 +34,13 @@ export default function initialize(target, keys, panel) {
 		// if (!e.isTrusted) return;		
 		e.isTrusted && (buffer.paste || (() => { }))(e, e.clipboardData.getData('text/plain'));
 	});
+
+	editor.addEventListener('select', e => {
+		// console.log(e)		
+		// if (editor.selectionStart+1 < editor.selectionEnd){
+		// 	if (editor.value[editor.selectionEnd-1] === ' ') editor.selectionEnd--;
+		// }
+	})
 }
 
 initialize.actionsMacro = actionsMacro;
@@ -48,7 +55,7 @@ initialize.finalPosition = finalPosition;
  */
 function preformat(event) {
 
-	console.log(event);
+	// console.log(event);
 	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : undo(event);
 	else if (event.key.toLowerCase() === 'tab') {
 
@@ -97,31 +104,25 @@ function format_text(event, fake) {
 		if (editor.selectionStart < editor.selectionEnd) {
 			if (editor.value.slice(editor.selectionStart, editor.selectionEnd).split('\n').length > 1) {
 				event.key = event.key || event.target.getAttribute('data-key');
-				if (multiActions[event.key] || multiActions[event.code]) {
-
-					event.target.dispatchEvent(new KeyboardEvent('keydown'));
+				if (multiActions[event.key] || multiActions[event.code]) {					
 
 					return storeMultiactions(event,
-						() => (multiActions[event.key] || multiActions[event.code])(event),
-						// o => editor.selectionStart = editor.selectionEnd-=o.backoffset
+						() => (multiActions[event.key] || multiActions[event.code])(event), // o => editor.selectionStart = editor.selectionEnd-=o.backoffset						
 					);
 				}
 			}
-			else {
-				// if(middlelineActions[event.key](event)) return; - // todo				
-				// замена посреди строки (для ссылок и курсивного текста, например)
+			else if (event.code === 'KeyV'){ // спец категория экшенов в мультиэкшене - это работа с буфером
 
 				if (multiActions[event.key] || multiActions[event.code]) {
 
-					if (editor.selectionStart+1 < editor.selectionEnd){
-						if (editor.value[editor.selectionEnd-1] === ' ') editor.selectionEnd--;
-					}
+					editor.selectionEnd-=editor.value[editor.selectionEnd-1] === ' ';
 					event.target.dispatchEvent(new KeyboardEvent('keydown'));
 					(multiActions[event.key] || multiActions[event.code])(event);
 
-
 				}
 			}
+			// else if(middlelineActions[event.key](event)) // todo				
+			// замена посреди строки (для ссылок и курсивного текста, например)			
 		}
 		caret = editor.selectionStart;
 	}
