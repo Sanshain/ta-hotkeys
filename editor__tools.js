@@ -26,7 +26,7 @@ export default function initialize(target, keys, panel) {
 
 	if (panel instanceof HTMLElement) panel = [].slice.apply(panel.querySelectorAll(`.${panel.className}>*`));
 	if (Array.isArray(panel)) {
-		panel.forEach(btn => btn.addEventListener('onclick', format_text));
+		panel.forEach(btn => btn.addEventListener('click', format_text));
 	}
 
 	editor.addEventListener('paste', e => {
