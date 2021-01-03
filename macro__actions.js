@@ -1,4 +1,17 @@
 // @ts-nocheck
+
+// import { input } from "./undoManager/initialize";
+
+export const buffer = { paste: null };
+export const finalPosition = Object.freeze({
+	Begin: 0,
+	preBegin: 1,
+	fillInside: 2,
+	Fill: 3,
+	preEnd: 4,
+	End: 5,	
+})
+
 export var actionsMacro = {
 
 	tag_in (value, line) { 
@@ -53,6 +66,7 @@ export var multiMacro = {
 		let len = (line.split('\n').length - 1) * value.length,
 			undo = line.startsWith('\n' + value);
 
+		// @ts-ignore
 		if (len === 0) format_text(e);			
 		else {
 	
@@ -75,6 +89,7 @@ export var multiMacro = {
 			end = target.selectionEnd;
 		let line = target.value.substring(start, end);
 
+		// @ts-ignore
 		if (line.split('\n').length === 1) format_text(e); 							// todo ?
 		else {
 	
@@ -88,8 +103,40 @@ export var multiMacro = {
 			// target.selectionStart = target.selectionEnd = end + value[0].length + value[1].length;
 		}
 		e.preventDefault();
-		return { backoffset: value[1].length }
-	}	
+		return { backoffset: undefined } // value[1].length
+	},
+	paste_inline: (value, e, target, position, condition) => {
 
+		let start = target.selectionStart, end = target.selectionEnd;
+		let line = target.value.substring(start, end);		
+		
+		if (line.indexOf('\n') > 0) return;
+		else{
+			buffer.paste = (event, _buff) => { if (!condition(_buff)) return;
+				
+				let startText = target.value.substring(0, start);
+				line = value.replace('%1', line).replace('$1', _buff)				
+				let endText = target.value.substring(end);
+				target.value = [startText, line, endText].join('');	
+				target.selectionEnd = (target.selectionStart = start) + line.length;
+				event.preventDefault();
+				buffer.paste = null;
+
+				let transfer = new DataTransfer(); 			    		// так для IE не будет работать
+				transfer.setData('text/plain', line);				
+				event.target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer }));				
+				target.dispatchEvent(new InputEvent('input', {			// так для IE не будет работать 
+					data: null,
+					inputType: 'insertFromPaste'
+				}));
+
+				if (position === finalPosition.End) {
+					target.selectionStart = target.selectionEnd = start + line.length;
+				}
+
+			}		
+		}
+		// return { backoffset: 0 }
+	}
 
 }

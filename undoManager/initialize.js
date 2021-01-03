@@ -4,30 +4,34 @@ var redoLog = (() => { });
 // redoLog = redoLog || (() => { });
 
 var editor = document.getElementById('editor') || document.querySelector('textarea'),
-	undoStorage = [], 
+	undoStorage = [],
 	redoStorage = [];
 
-export default function main(target){
+export default function main(target) {
 	editor = target;
 }
 
 editor.addEventListener('keydown', function (event) {
-	
+
 	// console.log(event)
-	
+
 	input.selection = {
 		start: event.target.selectionStart,
 		end: event.target.selectionEnd,
 	};
 
-	if (input.selection_length) input.lostData = editor.value.slice(
-		input.selection.start,
-		input.selection.end
-	)
-	else input.lostData = editor.value.slice(
-		input.selection.start - 1,
-		input.selection.end + 1
-	)
+	if (input.selection_length) {
+		input.lostData = editor.value.slice(
+			input.selection.start,
+			input.selection.end
+		)
+	}
+	else {
+		input.lostData = editor.value.slice(
+			input.selection.start - 1,
+			input.selection.end + 1
+		)
+	}
 
 });
 editor.addEventListener('paste', e => {
@@ -39,7 +43,7 @@ editor.addEventListener('paste', e => {
 });
 editor.addEventListener('input', event => {			// event.inputType && event.data	
 
-	console.log(event)
+	// console.log(event)
 
 	if (event.inputType == 'historyUndo') {
 		console.log(event.inputType);
@@ -64,9 +68,9 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 		}
 	}
 	else {
-		
+
 		// input.lostData = input.lostData.slice(1, -1); // !
-		input.selection.end = input.selection.start + ((input.selection.data || {}).length || 0);
+		input.selection.end = input.selection.start; // + ((input.data || {}).length || 0);		
 
 	}
 
@@ -84,7 +88,7 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 });
 
 
-const input = {
+export const input = {
 
 	type: null,		// 'insertFromPaste' | 'deleteByCut' | 'insertText' | 'deleteContentBackward' | ...
 	data: null,		//  inserted char by 'insertText' type
@@ -102,13 +106,13 @@ const input = {
 function actionApply(doingState, doingType) {
 
 	if (Boolean(doingType) !== Boolean('redo')) var lostData = doingState.lostData, data = doingState.data;
-	else { 
-		var data = doingState.lostData, 
-			lostData = doingState.data; 
+	else {
+		var data = doingState.lostData,
+			lostData = doingState.data;
 	}
 
 	switch (doingState.type) {
-		case 'insertFromPaste':			
+		case 'insertFromPaste':
 
 			editor.value = (
 				editor.value.substring(0, doingState.selection.start) + lostData +
@@ -127,7 +131,7 @@ function actionApply(doingState, doingType) {
 				);
 
 			editor.setSelectionRange(
-				doingState.selection.start + lostData.length, 
+				doingState.selection.start + lostData.length,
 				doingState.selection.end + lostData.length		  // + lostData.length * !!doingType
 			);
 			break;
@@ -136,7 +140,7 @@ function actionApply(doingState, doingType) {
 		case 'deleteContentBackward': // all other approaches to del
 			editor.value = (
 				editor.value.substring(0, doingState.selection.start) + (lostData || '') +
-				editor.value.substring(doingState.selection.end + !!doingType*(data || '').length)
+				editor.value.substring(doingState.selection.end + !!doingType * (data || '').length)
 			);
 
 			editor.selectionStart = editor.selectionEnd = (
@@ -147,9 +151,9 @@ function actionApply(doingState, doingType) {
 			);
 
 			if ((lostData || '').length > 1) editor.selectionEnd = doingState.selection.start + lostData.length;
-			
+
 			break;
-	}	
+	}
 }
 
 
@@ -160,31 +164,29 @@ function actionApply(doingState, doingType) {
 
 
 
-export const storeMultiactions = function(event, callback, onfinish){
+export const storeMultiactions = function (event, callback, onfinish) {
 
 	event.target.dispatchEvent(new KeyboardEvent('keydown'));
 
-	let opts = callback(event);		 							// multiActions[event.key](event);
+	let postOptions = callback(event);		 							// multiActions[event.key](event);
 
 	let transfer = new DataTransfer();							// так для IE не будет работать
-	transfer.setData('text/plain', 
+	transfer.setData('text/plain',
 		event.target.value.slice(event.target.selectionStart, event.target.selectionEnd  // or line.slice(1)
 	));
-	let clipboardEvent = new ClipboardEvent('paste', {
-		clipboardData: transfer
-	})
+	let clipboardEvent = new ClipboardEvent('paste', { clipboardData: transfer })
 
 	event.target.dispatchEvent(clipboardEvent);
-	event.target.dispatchEvent(new InputEvent('input',{			// так для IE не будет работать 
+	event.target.dispatchEvent(new InputEvent('input', {			// так для IE не будет работать 
 		data: null,
 		inputType: 'insertFromPaste'
-	}));	
-	if (onfinish) onfinish(opts);
+	}));
+	if (onfinish && postOptions && postOptions.backoffset !== undefined) onfinish(postOptions);
 }
-export const storeAction = function(event, callback, kwargs){
+export const storeAction = function (event, callback, kwargs) {
 	event.target.selectionStart = kwargs.startLine + 1;
 	event.target.selectionEnd = kwargs.endLine;
-	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));		
+	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));
 
 	let preformat = callback(event);
 
@@ -194,12 +196,12 @@ export const storeAction = function(event, callback, kwargs){
 
 	event.target.dispatchEvent(clipboardEvent);
 	input.caret = 123;
-	event.target.dispatchEvent(new InputEvent('input',{	// так для IE не будет работать 
+	event.target.dispatchEvent(new InputEvent('input', {	// так для IE не будет работать 
 		data: null,
 		inputType: 'insertFromPaste'
-	}));	
+	}));
 	input.caret = undefined;
-	
+
 	return preformat;
 }
 
@@ -218,11 +220,11 @@ const redo = (e) => {
 	let redoState = redoStorage.pop();
 	if (redoState) {
 		undoStorage.push(redoState), redoLog();
-		
+
 		actionApply(redoState, 'redo');
 		e.preventDefault();
 	}
-	
+
 }
 export const undo = (e) => {
 	if (e.shiftKey) return redo(e);

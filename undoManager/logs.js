@@ -1,3 +1,4 @@
+// @ts-nocheck
 function redoLog(storage) {
 
 	if (!storage) {

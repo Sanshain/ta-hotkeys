@@ -2,7 +2,7 @@
 
 import { storeMultiactions, storeAction, undo } from "./undoManager/initialize";
 import main from './undoManager/initialize';
-import { actionsMacro, multiMacro } from "./macro__actions";
+import { actionsMacro, multiMacro, finalPosition, buffer } from "./macro__actions";
 
 var editor = null,
 	multiActions = {},
@@ -14,28 +14,38 @@ export default function initialize(target, keys, panel) {
 	if (!(target instanceof HTMLTextAreaElement)) throw new Error('editor with hot keys needs textarea on the page');
 
 	editor.addEventListener('keydown', preformat);
-	if (keys instanceof Object){
+	if (keys instanceof Object) {
 
-		if ('actions' in keys && keys.actions instanceof Object) 
-		{
-			actions = keys.actions;
-			// actions.__proto__ = actionsMacro;
+		if ('actions' in keys && keys.actions instanceof Object) {
+			actions = keys.actions;					// actions.__proto__ = actionsMacro;			
 		}
 		if ('multiActions' in keys && keys.multiActions instanceof Object) {
-
-			multiActions = keys.multiActions;		
-			// multiActions.__proto__ = multiMacro;		
+			multiActions = keys.multiActions;		// multiActions.__proto__ = multiMacro;		
 		}
 	}
 
 	if (panel instanceof HTMLElement) panel = [].slice.apply(panel.querySelectorAll(`.${panel.className}>*`));
 	if (Array.isArray(panel)) {
-		panel.forEach(btn => btn.addEventListener('onclick', format_text));
+		panel.forEach(btn => btn.addEventListener('click', format_text));
 	}
+
+	editor.addEventListener('paste', e => {
+		
+		// if (!e.isTrusted) return;		
+		e.isTrusted && (buffer.paste || (() => { }))(e, e.clipboardData.getData('text/plain'));
+	});
+
+	editor.addEventListener('select', e => {
+		// console.log(e)		
+		// if (editor.selectionStart+1 < editor.selectionEnd){
+		// 	if (editor.value[editor.selectionEnd-1] === ' ') editor.selectionEnd--;
+		// }
+	})
 }
 
 initialize.actionsMacro = actionsMacro;
 initialize.multiMacro = multiMacro;
+initialize.finalPosition = finalPosition;
 
 /**
  * в отличие от format_text(e)  
@@ -44,7 +54,7 @@ initialize.multiMacro = multiMacro;
  * @param {*} event 
  */
 function preformat(event) {
-	
+
 	// console.log(event);
 	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : undo(event);
 	else if (event.key.toLowerCase() === 'tab') {
@@ -58,14 +68,14 @@ function preformat(event) {
 			let len = line.split('\n').length - 1;
 			if (len === 0) format_text(event);
 			else {
-				
+
 				storeMultiactions(event, () => {
 
 					let startLine = event.target.value.substring(0, start - 1)
 					line = !event.shiftKey ? line.replace(/\n/g, '\n	') : line.replace(/\n	/g, '\n');
 					let endLine = event.target.value.substring(end);
 					event.target.value = [startLine, line, endLine].join('');
-	
+
 					event.target.selectionStart = start;
 					event.target.selectionEnd = end + len * (event.shiftKey ? -1 : 1);
 
@@ -84,7 +94,7 @@ function preformat(event) {
  * @param {*} event 
  * @param {*} fake - эмуляция нажатого символа (опционально) для событий, не передающих нажатие клавиш (e.key)
  */
-function format_text(event, fake) {	
+function format_text(event, fake) {
 
 	let caret = null || 0;
 	fake = fake || event.target.getAttribute('data-key')
@@ -94,23 +104,25 @@ function format_text(event, fake) {
 		if (editor.selectionStart < editor.selectionEnd) {
 			if (editor.value.slice(editor.selectionStart, editor.selectionEnd).split('\n').length > 1) {
 				event.key = event.key || event.target.getAttribute('data-key');
-				if (multiActions[event.key]) {
-	
-					event.target.dispatchEvent(new KeyboardEvent('keydown'));
-	
-					storeMultiactions(
-						event, 
-						() => multiActions[event.key](event),
-						// opts => editor.selectionStart = editor.selectionEnd = editor.selectionEnd - opts.backoffset
+				if (multiActions[event.key] || multiActions[event.code]) {					
+
+					return storeMultiactions(event,
+						() => (multiActions[event.key] || multiActions[event.code])(event), // o => editor.selectionStart = editor.selectionEnd-=o.backoffset						
 					);
-	
-					return;
 				}
 			}
-			else{
-				// if(middlelineActions[event.key](event)) return; - // todo				
-				// замена посреди строки (для ссылок и курсивного текста, например)
+			else if (event.code === 'KeyV'){ // спец категория экшенов в мультиэкшене - это работа с буфером
+
+				if (multiActions[event.key] || multiActions[event.code]) {
+
+					editor.selectionEnd-=editor.value[editor.selectionEnd-1] === ' ';
+					event.target.dispatchEvent(new KeyboardEvent('keydown'));
+					(multiActions[event.key] || multiActions[event.code])(event);
+
+				}
 			}
+			// else if(middlelineActions[event.key](event)) // todo				
+			// замена посреди строки (для ссылок и курсивного текста, например)			
 		}
 		caret = editor.selectionStart;
 	}
@@ -136,21 +148,22 @@ function format_text(event, fake) {
 
 
 	// !todo undoMaager binding:
-	var formatAction = actions[event && (event.key || fake)];		
-	if (!event.key) event = {target: editor};						 // для кнопки нужно подменить target
+	var formatAction = actions[event && (event.key || fake)];
+	if (!event.key) event = { target: editor };						 // для кнопки нужно подменить target
 	if (formatAction) {
 
 		let preformat = storeAction(event, () => {
-			var preformat = formatAction(line, event);			
+			var preformat = formatAction(line, event);
 			editor.value = preLine + preformat.line + postLine;
-			return preformat; },{
+			return preformat;
+		}, {
 			startLine: startLine, endLine: endLine
 		})
 
 		if (preformat.eventAbort) event.preventDefault();
 		// возвращаем выделение
-		editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);				
-		
+		editor.selectionStart = editor.selectionEnd = caret + preformat.offset * (preformat.undo ? -1 : 1);
+
 	}
 	else {
 		return;
