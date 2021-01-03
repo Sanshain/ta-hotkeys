@@ -43,11 +43,11 @@
 	<script src="editor__tools.js"></script> -->
 	<script src="./__release__/hotkeys.js"></script>
 	<script>
-		
+
 
 		window.addEventListener('load', () => {
 
-			var actions = Object.assign(hokInit.actionsMacro, { 
+			var actions = Object.assign(hokInit.actionsMacro, {
 
 				'-': (line) => actions.begin('# ', line),
 				'Tab': (line, event) => actions.begin('	', line, event),
@@ -60,20 +60,26 @@
 				},
 
 			});
-			
-			let multiActions = Object.assign(hokInit.multiMacro,{
+
+			let multiActions = Object.assign(hokInit.multiMacro, {
 
 				'-': (e, target) => multiActions.begin('- ', e, target || editor || e.target),
-				'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target)
+				'*': (e, target) => multiActions.begin_end(['```\n', '\n```'], e, target || editor || e.target),
+				'KeyV': (e, target) => {
+					multiActions.inline('[%1](%2)', e, editor || e.target,
+						hokInit.finalPosition.End, 
+						v => v.startsWith('http')
+					)
+				}
 			})
 
 			hokInit(document.getElementById('editor'), {
 				actions: actions,
 				multiActions: multiActions
-			},[ document.getElementById('center__alignment') ])
+			}, [document.getElementById('center__alignment')])
 
-			for (let i = 0; i < 7; i++) editor.value += `line ${i+1}\n`;			
-			editor.focus();			
+			for (let i = 0; i < 7; i++) editor.value += `line ${i + 1}\n`;
+			editor.focus();
 		});
 	</script>
 </body>

@@ -84,7 +84,7 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 });
 
 
-const input = {
+export const input = {
 
 	type: null,		// 'insertFromPaste' | 'deleteByCut' | 'insertText' | 'deleteContentBackward' | ...
 	data: null,		//  inserted char by 'insertText' type
@@ -164,7 +164,7 @@ export const storeMultiactions = function(event, callback, onfinish){
 
 	event.target.dispatchEvent(new KeyboardEvent('keydown'));
 
-	let opts = callback(event);		 							// multiActions[event.key](event);
+	let postOptions = callback(event);		 							// multiActions[event.key](event);
 
 	let transfer = new DataTransfer();							// так для IE не будет работать
 	transfer.setData('text/plain', 
@@ -179,7 +179,7 @@ export const storeMultiactions = function(event, callback, onfinish){
 		data: null,
 		inputType: 'insertFromPaste'
 	}));	
-	if (onfinish) onfinish(opts);
+	if (onfinish && postOptions && postOptions.backoffset !== undefined) onfinish(postOptions);
 }
 export const storeAction = function(event, callback, kwargs){
 	event.target.selectionStart = kwargs.startLine + 1;

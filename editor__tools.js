@@ -2,7 +2,7 @@
 
 import { storeMultiactions, storeAction, undo } from "./undoManager/initialize";
 import main from './undoManager/initialize';
-import { actionsMacro, multiMacro } from "./macro__actions";
+import { actionsMacro, multiMacro, finalPosition, buffer } from "./macro__actions";
 
 var editor = null,
 	multiActions = {},
@@ -32,10 +32,16 @@ export default function initialize(target, keys, panel) {
 	if (Array.isArray(panel)) {
 		panel.forEach(btn => btn.addEventListener('onclick', format_text));
 	}
+
+	editor.addEventListener('paste', e => {
+		
+		e.isTrusted && (buffer.paste || (() => {}))(e, e.clipboardData.getData('text/plain'));
+	});
 }
 
 initialize.actionsMacro = actionsMacro;
 initialize.multiMacro = multiMacro;
+initialize.finalPosition = finalPosition;
 
 /**
  * в отличие от format_text(e)  
@@ -45,7 +51,7 @@ initialize.multiMacro = multiMacro;
  */
 function preformat(event) {
 	
-	// console.log(event);
+	console.log(event);
 	if (event.ctrlKey) event.code != 'KeyZ' ? format_text(event) : undo(event);
 	else if (event.key.toLowerCase() === 'tab') {
 
@@ -94,22 +100,29 @@ function format_text(event, fake) {
 		if (editor.selectionStart < editor.selectionEnd) {
 			if (editor.value.slice(editor.selectionStart, editor.selectionEnd).split('\n').length > 1) {
 				event.key = event.key || event.target.getAttribute('data-key');
-				if (multiActions[event.key]) {
+				if (multiActions[event.key] || multiActions[event.code]) {
 	
 					event.target.dispatchEvent(new KeyboardEvent('keydown'));
-	
-					storeMultiactions(
-						event, 
-						() => multiActions[event.key](event),
-						// opts => editor.selectionStart = editor.selectionEnd = editor.selectionEnd - opts.backoffset
-					);
-	
-					return;
+					
+					return storeMultiactions(event, 
+						() => (multiActions[event.key] || multiActions[event.code])(event),
+						// o => editor.selectionStart = editor.selectionEnd-=o.backoffset
+					);					
 				}
 			}
 			else{
 				// if(middlelineActions[event.key](event)) return; - // todo				
 				// замена посреди строки (для ссылок и курсивного текста, например)
+				
+				if (multiActions[event.key] || multiActions[event.code]) {
+				
+					event.target.dispatchEvent(new KeyboardEvent('keydown'));
+					return storeMultiactions(event, 
+						() => (multiActions[event.key] || multiActions[event.code])(event),
+						// o => editor.selectionStart = editor.selectionEnd-=o.backoffset
+					);
+					
+				}				
 			}
 		}
 		caret = editor.selectionStart;
