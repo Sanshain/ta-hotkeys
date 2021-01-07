@@ -1,4 +1,4 @@
-# ta-hotkeys
+## ta-hotkeys
 
 ### Textarea with hot keys 
 
