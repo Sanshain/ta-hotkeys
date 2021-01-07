@@ -8,7 +8,7 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Launch Chrome against localhost",
-			"url": "file:///F:/Node/native/taHotkeys/index.html", 		// "http://localhost:8080",
+			"url": "${workspaceFolder}/index.html", 		// "http://localhost:8080",
 			"webRoot": "${workspaceFolder}"
 		}
 	]

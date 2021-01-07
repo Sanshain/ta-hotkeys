@@ -131,9 +131,9 @@ function format_text(event, fake) {
 
 	// получаем позицию начала строки
 	let startLine = (editor.value.lastIndexOf('\n', caret - 1));
-	if (startLine < 0) startLine = 0;
+	// if (startLine < 0) startLine = 0;   							// instead of +1 inside storeAction
 
-
+	
 	// получаем позицию конца строки
 	let endLine = (editor.value.indexOf('\n', caret));
 	if (endLine < 0) endLine = editor.value.length;
