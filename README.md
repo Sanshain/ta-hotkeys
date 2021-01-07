@@ -8,16 +8,18 @@ A package designed to extend the functionality of textarea using hotkeys. Provid
 
 You can see an example of the work [here](https://sanshain.github.io/ta-hotkeys/)
 
-### Get started
+## Installation
+
+- Use the script tag with the attribute src: `<script src="./hotkeys.js"></script>` (available for release or master)
+- install as npm package `npm i Sanshain/ta-hotkeys` (only for module branch) and `npm i` after that
+- use `git clone https://github.com/Sanshain/ta-hotkeys.git` and independently build it via rollup (only for module branch)
+
+## Quick start
 
 Explore the following example:
 
 
-### Installation
 
-- Use the script tag with the attribute src: `<script src="./hotkeys.js"></script>`
-- install as npm package `npm i Sanshain/ta-hotkeys` (in drafting)(only for module branch)
-- use `git clone https://github.com/Sanshain/ta-hotkeys.git` and independently build it via rollup (only for module branch)
 
 ```js
 window.addEventListener('load', () => {
@@ -41,6 +43,8 @@ window.addEventListener('load', () => {
 });
 ```
 
+### Using
+
 for html page: 
 
 ```html
@@ -48,4 +52,5 @@ for html page:
 <button data-key='/' id='center__alignment'>click here</button>
 <script src="./__release__/hotkeys.js"></script>
 ```
+
 
