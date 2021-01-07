@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undo-mimic demo</title>
+    <style>
+        .log__redo {
+            margin: 0.5em;
+            background-color: lightgray;
+            padding: 0.4em;
+            color: darkslateblue;
+        }
+    </style>
+    
+</head>
+
+<body>
+    <textarea name="" id="" cols="30" rows="10">
+        123
+        456
+        789
+    </textarea>
+    <br>
+    <button id="add">add</button>
+    <button id="replace">replace</button>
+    <button id="undo_btn">undo</button>
+    <button id="redo_btn">redo</button>
+    <div class="log__redo"></div>
+    <script src="./release/undo-mimic.js"></script>
+    <script>
+        function initialize() {
+
+            var editor = actionhandler.default(document.querySelector('textarea'), true);
+            editor.onkeydown = (event) => { event.code === 'KeyZ' && event.ctrlKey && actionhandler.undo(event) };
+
+
+            document.querySelector('#add').onclick = (event) => {					  // first example stored by undo-mimic action 
+
+                let val = ' 123';
+                editor.selectionStart = editor.selectionEnd = editor.value.length + 1;
+                actionhandler.storeAction({ target: editor }, () => ({ line: (() => { editor.value += val; return { line: val } })() }), {
+                    startLine: editor.selectionStart - 1,
+                    endLine: editor.selectionEnd
+                });
+                editor.focus();
+            }
+
+            document.querySelector('#replace').onclick = (event) => {					// second example stored by undo-mimic action 
+
+                editor.selectionStart = 0, editor.selectionEnd = editor.value.length;
+                actionhandler.storeMultiactions({ target: editor }, () => editor.value = '123 ', null, { selectionStart: 0 });
+                editor.selectionStart = editor.selectionEnd = editor.value.length, editor.focus();
+            }
+
+            return editor;
+
+        }
+
+        window.addEventListener('load', () => {
+            const editor = initialize();
+
+            document.getElementById('undo_btn').onclick = () => { actionhandler.undo({ shiftKey: false }); editor.focus(); }
+            document.getElementById('redo_btn').onclick = () => { actionhandler.undo({ shiftKey: true }); editor.focus(); }
+        });        
+    </script>
+</body>
+
+</html>

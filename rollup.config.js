@@ -1,6 +1,7 @@
 import { uglify } from "rollup-plugin-uglify";
 import babel from 'rollup-plugin-babel';
 
+
 export default {
     input: 'editor__tools.js',
     output: {

@@ -1,14 +1,17 @@
 // @ts-nocheck
 
-var redoLog = (() => { });
-// redoLog = redoLog || (() => { });
+import { redoLog } from "./logs";
+// var redoLog = (() => { });
 
-var editor = document.getElementById('editor') || document.querySelector('textarea'),
+var editor = document.getElementById('editor') || document.querySelector('textarea'),	
 	undoStorage = [],
-	redoStorage = [];
+	redoStorage = [],
+	debug = false;
 
-export default function main(target) {
+export default function main(target, dbg) {
+	debug = dbg;
 	editor = target;
+	return editor;
 }
 
 editor.addEventListener('keydown', function (event) {
@@ -82,9 +85,9 @@ editor.addEventListener('input', event => {			// event.inputType && event.data
 	if (event.inputType != 'historyUndo') {
 
 		redoStorage.splice(0, redoStorage.length);
-		redoLog();
+		debug && redoLog(storage);
 	}
-	else redoLog(undoStorage);
+	else debug && redoLog(storage);
 });
 
 
@@ -164,7 +167,7 @@ function actionApply(doingState, doingType) {
 
 
 
-export const storeMultiactions = function (event, callback, onfinish) {
+export const storeMultiactions = function (event, callback, onfinish, kwargs) {
 
 	event.target.dispatchEvent(new KeyboardEvent('keydown'));
 
@@ -172,8 +175,11 @@ export const storeMultiactions = function (event, callback, onfinish) {
 
 	let transfer = new DataTransfer();							// так для IE не будет работать
 	transfer.setData('text/plain',
-		event.target.value.slice(event.target.selectionStart, event.target.selectionEnd  // or line.slice(1)
-	));
+		event.target.value.slice(
+			(kwargs || event.target).selectionStart, 
+			event.target.selectionEnd  // or line.slice(1)
+		)
+	);
 	let clipboardEvent = new ClipboardEvent('paste', { clipboardData: transfer })
 
 	event.target.dispatchEvent(clipboardEvent);
@@ -183,11 +189,24 @@ export const storeMultiactions = function (event, callback, onfinish) {
 	}));
 	if (onfinish && postOptions && postOptions.backoffset !== undefined) onfinish(postOptions);
 }
+/**
+ * 
+ * @param {*} event 
+ * @param {Function} callback 
+ * @param {startLine: Number, endLine: Number} kwargs - позиция начала строки и конца строки 
+ */
 export const storeAction = function (event, callback, kwargs) {
-	event.target.selectionStart = kwargs.startLine + 1;
-	event.target.selectionEnd = kwargs.endLine;
-	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));
 
+	// if (!kwargs) kwargs = {
+	// 	// todo default behavior (now is draft!!)
+	// 	startLine: editor.value.lastIndexOf('\n', editor.selectionStart-1),
+	// 	endLine: Math.max(editor.value.indexOf('\n', editor.selectionEnd), editor.value.length)
+	// }
+
+	event.target.selectionStart = kwargs.startLine + 1;
+	event.target.selectionEnd = kwargs.endLine;	
+
+	event.target.dispatchEvent(new KeyboardEvent('keydown', {}));
 	let preformat = callback(event);
 
 	let transfer = new DataTransfer(); 					// так для IE не будет работать
@@ -215,14 +234,14 @@ const InputActionType =
 	deleteContentForward: 'deleteContentForward'		// get selection (keydown)
 }
 
-
+let storage = { undo: undoStorage, redo: redoStorage };
 const redo = (e) => {
 	let redoState = redoStorage.pop();
 	if (redoState) {
-		undoStorage.push(redoState), redoLog();
+		undoStorage.push(redoState), debug && redoLog(storage);
 
 		actionApply(redoState, 'redo');
-		e.preventDefault();
+		if (e.preventDefault) e.preventDefault();
 	}
 
 }
@@ -231,9 +250,10 @@ export const undo = (e) => {
 
 	let undoState = undoStorage.pop();
 	if (undoState) {
-		redoStorage.push(undoState), redoLog();
+		redoStorage.push(undoState), debug && redoLog(storage);
 
 		actionApply(undoState, '');
-		e.preventDefault();
+		if (e.preventDefault) e.preventDefault();
+		
 	}
 }

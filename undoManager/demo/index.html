@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undo-mimic demo</title>
+    <style>
+        .log__redo {
+            margin: 0.5em;
+            background-color: lightgray;
+            padding: 0.4em;
+            color: darkslateblue;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea name="" id="" cols="30" rows="10">
+        123
+        456
+        789
+    </textarea>
+    <br>
+    <button id="add">add</button>
+    <button id="replace">replace</button>
+    <button id="undo_btn">undo</button>
+    <button id="redo_btn">redo</button>
+    <div class="log__redo"></div>
+    <script src="release/undo-mimic.js"></script>
+</body>
+
+</html>
